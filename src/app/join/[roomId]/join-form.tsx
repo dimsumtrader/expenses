@@ -25,7 +25,7 @@ export default function JoinForm({
         action={handleSubmit}
         className="w-full max-w-sm border-2 border-black rounded-none p-6"
       >
-        <h1 className="font-mono text-xl font-bold mb-2 text-center">JOIN ROOM</h1>
+        <h1 className="font-mono text-xl font-bold mb-2 text-center">JOIN GROUP</h1>
         <div className="text-center mb-6">
           <p className="font-mono text-sm font-bold">{group.name}</p>
           <p className="font-mono text-xs text-gray-500">
@@ -45,7 +45,6 @@ export default function JoinForm({
           required
           maxLength={30}
           className="w-full border-2 border-black rounded-none px-3 py-2 mb-4 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          placeholder="Alice"
         />
 
         {error && (

@@ -3,7 +3,7 @@
 import { submitTransaction } from "@/app/actions/entries";
 import { convertCurrency } from "@/lib/currency";
 import { haptic } from "@/lib/haptics";
-import type { GroupRow } from "@/lib/types";
+import type { GroupRow, DefaultSplitRow } from "@/lib/types";
 import Decimal from "decimal.js";
 import { useState, useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,32 +17,46 @@ export default function TransactionForm({
   group,
   members,
   userId,
+  profileId,
+  defaultSplits,
 }: {
   groupId: string;
   group: GroupRow;
   members: Member[];
   userId: string;
+  profileId: string;
+  defaultSplits: DefaultSplitRow[];
 }) {
   const today = new Date().toISOString().split("T")[0];
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today);
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState(group.home_currency);
-  const [payerId, setPayerId] = useState(members.find((m) => m.id === userId)?.id ?? members[0]?.id ?? "");
+  const [payerId, setPayerId] = useState(profileId || members[0]?.id || "");
   const [splits, setSplits] = useState<Record<string, string>>({});
   const [convertedAmount, setConvertedAmount] = useState<string | null>(null);
   const router = useRouter();
   const [error, setError] = useState("");
 
-  // Initialize equal splits
+  // Initialize splits from defaults or equal
   useEffect(() => {
-    const equal = (100 / members.length).toFixed(2);
+    const defaultsMap = Object.fromEntries(
+      defaultSplits.map((ds) => [ds.user_id, String(ds.percentage)]),
+    );
+    const hasDefaults = members.every((m) => defaultsMap[m.id] !== undefined);
     const initial: Record<string, string> = {};
-    members.forEach((m) => {
-      initial[m.id] = equal;
-    });
+    if (hasDefaults && defaultSplits.length > 0) {
+      members.forEach((m) => {
+        initial[m.id] = defaultsMap[m.id];
+      });
+    } else {
+      const equal = (100 / members.length).toFixed(2);
+      members.forEach((m) => {
+        initial[m.id] = equal;
+      });
+    }
     setSplits(initial);
-  }, [members]);
+  }, [members, defaultSplits]);
 
   // Currency conversion
   useEffect(() => {
@@ -133,7 +147,6 @@ export default function TransactionForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full border-2 border-black rounded-none px-3 py-2 mb-4 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          placeholder="Weekly Groceries"
         />
 
         <label htmlFor="date" className="block text-sm font-medium mb-1">
@@ -163,7 +176,6 @@ export default function TransactionForm({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="flex-1 border-2 border-black rounded-none px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black"
-            placeholder="0.00"
           />
           <select
             value={currency}

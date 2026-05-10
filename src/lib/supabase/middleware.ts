@@ -30,11 +30,17 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect routes — allow /login and /auth/confirm without session
-  const publicPaths = ["/login", "/auth/confirm", "/setup", "/join"];
-  if (!user && !publicPaths.some((p) => request.nextUrl.pathname.startsWith(p))) {
+  // Protect routes — only /login is public
+  if (!user && request.nextUrl.pathname !== "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect logged-in users away from /login
+  if (user && request.nextUrl.pathname === "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 

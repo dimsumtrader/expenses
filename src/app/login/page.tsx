@@ -2,53 +2,70 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    const params = new URLSearchParams(window.location.search);
-    const next = params.get("next") ?? "/";
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}` },
-    });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setSent(true);
+    try {
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+      router.push("/");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setLoading(false);
     }
-  }
-
-  if (sent) {
-    return (
-      <main className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-sm border-2 border-black rounded-none p-6 text-center">
-          <h1 className="font-mono text-xl font-bold mb-4">CHECK YOUR EMAIL</h1>
-          <p className="text-sm">
-            We sent a magic link to <strong>{email}</strong>
-          </p>
-        </div>
-      </main>
-    );
   }
 
   return (
     <main className="flex-1 flex items-center justify-center px-4">
       <form
-        onSubmit={handleLogin}
+        onSubmit={handleSubmit}
         className="w-full max-w-sm border-2 border-black rounded-none p-6"
       >
         <h1 className="font-mono text-xl font-bold mb-6 text-center">
           EASY SPLIT
         </h1>
+
+        {/* Tab switcher */}
+        <div className="flex border-2 border-black mb-6">
+          <button
+            type="button"
+            onClick={() => { setMode("login"); setError(""); }}
+            className={`flex-1 py-2 font-mono text-sm font-bold transition-colors ${
+              mode === "login" ? "bg-black text-white" : "bg-white text-black"
+            }`}
+          >
+            SIGN IN
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("signup"); setError(""); }}
+            className={`flex-1 py-2 font-mono text-sm font-bold transition-colors ${
+              mode === "signup" ? "bg-black text-white" : "bg-white text-black"
+            }`}
+          >
+            SIGN UP
+          </button>
+        </div>
 
         <label htmlFor="email" className="block text-sm font-medium mb-1">
           Email
@@ -60,7 +77,18 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full border-2 border-black rounded-none px-3 py-2 mb-4 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          placeholder="you@example.com"
+        />
+
+        <label htmlFor="password" className="block text-sm font-medium mb-1">
+          Password
+        </label>
+        <input
+          id="password"
+          type="password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border-2 border-black rounded-none px-3 py-2 mb-4 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black"
         />
 
         {error && (
@@ -69,9 +97,10 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="w-full bg-accent text-white font-mono font-bold py-2 rounded-none border-2 border-black active:scale-[0.98] transition-transform"
+          disabled={loading}
+          className="w-full bg-accent text-white font-mono font-bold py-2 rounded-none border-2 border-black active:scale-[0.98] transition-transform disabled:opacity-50"
         >
-          SEND MAGIC LINK
+          {loading ? "..." : mode === "login" ? "SIGN IN" : "SIGN UP"}
         </button>
       </form>
     </main>

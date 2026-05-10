@@ -10,5 +10,5 @@ export default async function SetupPage() {
 
   if (!user) redirect("/login");
 
-  return <SetupForm email={user.email!} />;
+  return <SetupForm />;
 }

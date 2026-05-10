@@ -17,8 +17,8 @@ export default async function JoinPage({ params }: { params: Promise<{ roomId: s
     return (
       <main className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-sm border-2 border-black rounded-none p-6 text-center">
-          <h1 className="font-mono text-xl font-bold mb-2">ROOM NOT FOUND</h1>
-          <p className="text-sm">No room with code <strong className="font-mono">{roomId}</strong></p>
+          <h1 className="font-mono text-xl font-bold mb-2">GROUP NOT FOUND</h1>
+          <p className="text-sm">No group with code <strong className="font-mono">{roomId}</strong></p>
         </div>
       </main>
     );

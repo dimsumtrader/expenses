@@ -15,6 +15,7 @@ export default async function AddPaymentPage({ searchParams }: { searchParams: P
     .from("profiles")
     .select("id, user_id, group_id, display_name, groups(id, room_id, name, home_currency)")
     .eq("user_id", user.id)
+    .is("removed_at", null)
     .returns<ProfileRow[]>();
 
   if (!profiles || profiles.length === 0) redirect("/setup");
@@ -29,14 +30,15 @@ export default async function AddPaymentPage({ searchParams }: { searchParams: P
   const { data: members } = await supabase
     .from("profiles")
     .select("id, display_name")
-    .eq("group_id", activeProfile.group_id);
+    .eq("group_id", activeProfile.group_id)
+    .is("removed_at", null);
 
   return (
     <PaymentForm
       groupId={activeProfile.group_id}
       group={group}
       members={members ?? []}
-      userId={user.id}
+      profileId={activeProfile.id}
     />
   );
 }

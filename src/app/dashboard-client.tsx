@@ -1,10 +1,10 @@
 "use client";
 
 import { haptic } from "@/lib/haptics";
-import type { GroupRow, EntryRow } from "@/lib/types";
+import type { GroupRow, EntryRow, SplitRow } from "@/lib/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, ChevronDown, Share2 } from "lucide-react";
+import { Plus, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import EntryDetail from "./entry-detail";
 import { logout } from "@/app/actions/auth";
@@ -15,19 +15,23 @@ type GroupOption = { id: string; name: string; room_id: string; home_currency: s
 
 export default function DashboardClient({
   group,
+  hasNoGroup,
   allGroups,
   members,
   balances,
   entries,
+  splits,
   profiles,
   userId,
   profileId,
 }: {
-  group: GroupRow;
+  group?: GroupRow;
+  hasNoGroup?: boolean;
   allGroups: GroupOption[];
   members: Member[];
   balances: BalanceView[];
   entries: EntryRow[];
+  splits: SplitRow[];
   profiles: Member[];
   userId: string;
   profileId: string;
@@ -36,12 +40,10 @@ export default function DashboardClient({
   const [selectedEntry, setSelectedEntry] = useState<EntryRow | null>(null);
   const [groupMenuOpen, setGroupMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const activeGroupParam = allGroups.length > 1 ? `?g=${group.id}` : "";
   const [copied, setCopied] = useState(false);
 
-  function copyShareLink() {
-    const url = `${window.location.origin}/join/${group.room_id}`;
-    navigator.clipboard.writeText(url);
+  function copyRoomCode() {
+    navigator.clipboard.writeText(group!.room_id);
     haptic();
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -63,35 +65,27 @@ export default function DashboardClient({
     router.push(`/?g=${groupId}`);
   }
 
+  // No group state — show empty dashboard with prominent CTA
+  if (hasNoGroup) {
+    return <NoGroupDashboard />;
+  }
+
+  const activeGroupParam = allGroups.length > 1 ? `?g=${group!.id}` : "";
+
   return (
     <div className="flex-1 flex flex-col max-w-lg mx-auto w-full min-h-screen">
       {/* Top Bar — app identity + group switcher */}
       <header className="sticky top-0 z-10 bg-white border-b-2 border-black">
         <div className="px-4 pt-3 pb-3 flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <h1 className="font-mono text-sm font-bold tracking-[0.25em]">EASY SPLIT</h1>
-            <span className="font-mono text-[10px] text-black/30">{group.room_id}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Share button */}
+          {/* Group Switcher */}
+          <div className="relative" ref={menuRef}>
             <button
-              onClick={copyShareLink}
-              className="flex items-center gap-1.5 font-mono text-[11px] border-2 border-black px-2.5 py-1 hover:bg-black hover:text-white transition-colors"
+              onClick={() => { haptic(); setGroupMenuOpen(!groupMenuOpen); }}
+              className="flex items-center gap-1.5 font-mono text-sm font-bold border-2 border-black px-2.5 py-1 hover:bg-black hover:text-white transition-colors"
             >
-              <Share2 size={12} />
-              {copied ? "COPIED" : "SHARE"}
+              {group!.name}
+              <ChevronDown size={14} />
             </button>
-
-            {/* Group Switcher */}
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => { haptic(); setGroupMenuOpen(!groupMenuOpen); }}
-                className="flex items-center gap-1.5 font-mono text-[11px] border-2 border-black px-2.5 py-1 hover:bg-black hover:text-white transition-colors"
-              >
-                {group.name}
-                {allGroups.length > 1 && <ChevronDown size={12} />}
-              </button>
 
             {groupMenuOpen && (
               <div className="absolute right-0 top-full mt-1 bg-white border-2 border-black w-52 z-20">
@@ -101,25 +95,19 @@ export default function DashboardClient({
                     key={g.id}
                     onClick={() => switchGroup(g.id)}
                     className={`w-full text-left px-3 py-2.5 font-mono text-xs transition-colors ${
-                      g.id === group.id ? "bg-black text-white" : "hover:bg-gray-50 text-black"
+                      g.id === group!.id ? "bg-black text-white" : "hover:bg-gray-50 text-black"
                     } ${i === allGroups.length - 1 ? "border-b-2 border-black" : "border-b border-gray-200"}`}
                   >
                     {g.name}
                     <span className="text-[10px] ml-2 opacity-50">{g.home_currency}</span>
                   </button>
                 ))}
-                {/* Section 2: Edit & New Group */}
+                {/* Section 2: Edit */}
                 <Link
                   href="/settings"
-                  className="block px-3 py-2.5 font-mono text-xs border-b border-gray-200 hover:bg-gray-50 text-accent"
-                >
-                  EDIT
-                </Link>
-                <Link
-                  href="/setup"
                   className="block px-3 py-2.5 font-mono text-xs border-b-2 border-black hover:bg-gray-50 text-accent"
                 >
-                  NEW GROUP
+                  EDIT
                 </Link>
                 {/* Section 3: Logout */}
                 <button
@@ -131,6 +119,20 @@ export default function DashboardClient({
               </div>
             )}
           </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={copyRoomCode}
+              className="font-mono text-xs tracking-[0.2em] border-2 border-black px-2 py-1 hover:bg-black hover:text-white transition-colors"
+            >
+              {copied ? "COPIED" : group!.room_id}
+            </button>
+            <Link
+              href="/setup"
+              className="font-mono text-[11px] border-2 border-black px-2 py-1 hover:bg-black hover:text-white transition-colors"
+            >
+              + GROUP
+            </Link>
           </div>
         </div>
       </header>
@@ -153,8 +155,7 @@ export default function DashboardClient({
                   isPositive ? "text-green-700" : isNegative ? "text-red-600" : "text-black/50"
                 }`}>
                   {amount > 0 ? "+" : ""}{b.amount}
-                  <span className="text-[10px] font-normal ml-1 text-black/40">{group.home_currency}</span>
-                </span>
+                  <span className="text-[10px] font-normal ml-1 text-black/40">{group!.home_currency}</span>                </span>
               </div>
             );
           })}
@@ -212,7 +213,7 @@ export default function DashboardClient({
                   </p>
                   <p className="font-mono text-sm font-bold flex-shrink-0 tabular-nums">
                     {Number(entry.amount_home).toFixed(2)}
-                    <span className="text-[10px] font-normal ml-0.5 text-black/40">{group.home_currency}</span>
+                    <span className="text-[10px] font-normal ml-0.5 text-black/40">{group!.home_currency}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -260,12 +261,34 @@ export default function DashboardClient({
       {selectedEntry && (
         <EntryDetail
           entry={selectedEntry}
+          splits={splits.filter((s) => s.entry_id === selectedEntry.id)}
           profiles={profiles}
-          group={group}
+          group={group!}
           profileId={profileId}
           onClose={() => setSelectedEntry(null)}
         />
       )}
+    </div>
+  );
+}
+
+function NoGroupDashboard() {
+  return (
+    <div className="flex-1 flex flex-col max-w-lg mx-auto w-full min-h-screen">
+      <header className="sticky top-0 z-10 bg-white border-b-2 border-black">
+        <div className="px-4 pt-3 pb-3">
+          <h1 className="font-mono text-sm font-bold tracking-[0.25em]">EASY SPLIT</h1>
+        </div>
+      </header>
+
+      <div className="flex-1 flex items-center justify-center px-4">
+        <Link
+          href="/setup"
+          className="bg-accent text-white font-mono font-bold py-3 px-8 border-2 border-black active:scale-[0.98] transition-transform"
+        >
+          ADD GROUP
+        </Link>
+      </div>
     </div>
   );
 }

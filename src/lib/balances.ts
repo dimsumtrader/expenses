@@ -72,15 +72,15 @@ export function computeBalances(
     }
 
     if (entry.type === "payment") {
-      // Recipient gets +amount_home, payer gets -amount_home
+      // Payer settles their debt (balance goes up), recipient gets repaid (balance goes down)
       balances.set(
         entry.payer_id,
-        (balances.get(entry.payer_id) ?? new Decimal(0)).minus(new Decimal(entry.amount_home)),
+        (balances.get(entry.payer_id) ?? new Decimal(0)).plus(new Decimal(entry.amount_home)),
       );
       if (entry.recipient_id) {
         balances.set(
           entry.recipient_id,
-          (balances.get(entry.recipient_id) ?? new Decimal(0)).plus(new Decimal(entry.amount_home)),
+          (balances.get(entry.recipient_id) ?? new Decimal(0)).minus(new Decimal(entry.amount_home)),
         );
       }
     }

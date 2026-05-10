@@ -6,6 +6,7 @@
 DROP FUNCTION IF EXISTS get_my_group_id() CASCADE;
 DROP FUNCTION IF EXISTS check_split_total() CASCADE;
 DROP TABLE IF EXISTS splits CASCADE;
+DROP TABLE IF EXISTS default_splits CASCADE;
 DROP TABLE IF EXISTS entries CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 DROP TABLE IF EXISTS groups CASCADE;
@@ -19,7 +20,7 @@ CREATE TYPE entry_type AS ENUM ('transaction', 'payment');
 -- -------------------------------------------
 CREATE TABLE groups (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  room_id       VARCHAR(6) NOT NULL UNIQUE CHECK (room_id ~ '^[0-9]{6}$'),
+  room_id       VARCHAR(4) NOT NULL UNIQUE CHECK (room_id ~ '^[0-9]{4}$'),
   name          TEXT NOT NULL DEFAULT 'My Group',
   home_currency CHAR(3)    NOT NULL DEFAULT 'USD',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -36,6 +37,7 @@ CREATE TABLE profiles (
   group_id     UUID NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
   display_name TEXT NOT NULL CHECK (char_length(display_name) <= 30),
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  removed_at   TIMESTAMPTZ DEFAULT NULL,
   UNIQUE (user_id, group_id)
 );
 
@@ -53,7 +55,7 @@ LANGUAGE sql
 SECURITY DEFINER
 STABLE
 AS $$
-  SELECT COALESCE(ARRAY_AGG(group_id), '{}') FROM profiles WHERE user_id = auth.uid()
+  SELECT COALESCE(ARRAY_AGG(group_id), '{}') FROM profiles WHERE user_id = auth.uid() AND removed_at IS NULL
 $$;
 
 -- -------------------------------------------
@@ -105,6 +107,19 @@ CREATE TABLE splits (
 
 CREATE INDEX idx_splits_entry_id ON splits (entry_id);
 
+-- -------------------------------------------
+-- Default Splits (per-member default % per group)
+-- -------------------------------------------
+CREATE TABLE default_splits (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id   UUID        NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
+  user_id    UUID        NOT NULL REFERENCES profiles (id) ON DELETE CASCADE,
+  percentage NUMERIC(5,2) NOT NULL CHECK (percentage >= 0 AND percentage <= 100),
+  UNIQUE (group_id, user_id)
+);
+
+CREATE INDEX idx_default_splits_group_id ON default_splits (group_id);
+
 -- Split integrity: sum of percentages per transaction must equal 100%
 CREATE OR REPLACE FUNCTION check_split_total()
 RETURNS TRIGGER
@@ -140,6 +155,7 @@ ALTER TABLE groups   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE entries  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE splits   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE default_splits ENABLE ROW LEVEL SECURITY;
 
 -- Groups: members can read their groups
 CREATE POLICY "groups: read own group"
@@ -161,10 +177,10 @@ CREATE POLICY "groups: update own group"
   ON groups FOR UPDATE
   USING (id = ANY(get_my_group_id()));
 
--- Profiles: read group members, insert/update own
+-- Profiles: read active group members (excludes left users)
 CREATE POLICY "profiles: read group members"
   ON profiles FOR SELECT
-  USING (group_id = ANY(get_my_group_id()));
+  USING (group_id = ANY(get_my_group_id()) AND removed_at IS NULL);
 
 CREATE POLICY "profiles: insert own profile"
   ON profiles FOR INSERT
@@ -219,3 +235,20 @@ CREATE POLICY "splits: delete group"
     SELECT 1 FROM entries e
     WHERE e.id = splits.entry_id AND e.group_id = ANY(get_my_group_id())
   ));
+
+-- Default Splits: full CRUD within own group
+CREATE POLICY "default_splits: read group"
+  ON default_splits FOR SELECT
+  USING (group_id = ANY(get_my_group_id()));
+
+CREATE POLICY "default_splits: insert group"
+  ON default_splits FOR INSERT
+  WITH CHECK (group_id = ANY(get_my_group_id()));
+
+CREATE POLICY "default_splits: update group"
+  ON default_splits FOR UPDATE
+  USING (group_id = ANY(get_my_group_id()));
+
+CREATE POLICY "default_splits: delete group"
+  ON default_splits FOR DELETE
+  USING (group_id = ANY(get_my_group_id()));

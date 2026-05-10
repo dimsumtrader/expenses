@@ -12,17 +12,18 @@ export default function PaymentForm({
   groupId,
   group,
   members,
-  userId,
+  profileId,
 }: {
   groupId: string;
   group: GroupRow;
   members: Member[];
-  userId: string;
+  profileId: string;
 }) {
   const today = new Date().toISOString().split("T")[0];
-  const router = useRouter();  const [payerId, setPayerId] = useState(members.find((m) => m.id === userId)?.id ?? members[0]?.id ?? "");
+  const router = useRouter();
+  const [payerId, setPayerId] = useState(profileId || members[0]?.id || "");
   const [recipientId, setRecipientId] = useState(
-    members.find((m) => m.id !== (members.find((m2) => m2.id === userId)?.id ?? ""))?.id ?? "",
+    members.find((m) => m.id !== profileId)?.id ?? "",
   );
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today);
@@ -107,7 +108,6 @@ export default function PaymentForm({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           className="w-full border-2 border-black rounded-none px-3 py-2 mb-4 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          placeholder="0.00"
         />
 
         <label htmlFor="date" className="block text-sm font-medium mb-1">

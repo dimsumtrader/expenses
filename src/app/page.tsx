@@ -16,9 +16,25 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
     .from("profiles")
     .select("id, user_id, group_id, display_name, groups(id, room_id, name, home_currency)")
     .eq("user_id", user.id)
+    .is("removed_at", null)
     .returns<ProfileRow[]>();
 
-  if (!profiles || profiles.length === 0) redirect("/setup");
+  // No groups yet — render empty dashboard with onboarding
+  if (!profiles || profiles.length === 0) {
+    return (
+      <DashboardClient
+        hasNoGroup
+        allGroups={[]}
+        members={[]}
+        balances={[]}
+        entries={[]}
+        splits={[]}
+        profiles={[]}
+        userId={user.id}
+        profileId=""
+      />
+    );
+  }
 
   // Select active group: from ?g= param, or first group
   const activeProfile = params.g
@@ -36,7 +52,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
   });
 
   const [membersResult, entriesResult] = await Promise.all([
-    supabase.from("profiles").select("id, display_name").eq("group_id", activeProfile.group_id),
+    supabase.from("profiles").select("id, display_name").eq("group_id", activeProfile.group_id).is("removed_at", null),
     supabase
       .from("entries")
       .select("id, type, title, date, amount_home, amount_orig, currency_orig, payer_id, recipient_id, created_by, created_at")
@@ -89,6 +105,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
         amount: b.amount.toFixed(2),
       }))}
       entries={entries}
+      splits={splits}
       profiles={members}
       userId={user.id}
       profileId={activeProfile.id}

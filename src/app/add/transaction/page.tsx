@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import TransactionForm from "./transaction-form";
-import type { ProfileRow, GroupRow } from "@/lib/types";
+import type { ProfileRow, GroupRow, DefaultSplitRow } from "@/lib/types";
 
 export default async function AddTransactionPage({ searchParams }: { searchParams: Promise<{ g?: string }> }) {
   const params = await searchParams;
@@ -26,17 +26,23 @@ export default async function AddTransactionPage({ searchParams }: { searchParam
     ? activeProfile.groups[0]
     : activeProfile.groups;
 
-  const { data: members } = await supabase
-    .from("profiles")
-    .select("id, display_name")
-    .eq("group_id", activeProfile.group_id);
+  const [membersResult, defaultSplitsResult] = await Promise.all([
+    supabase.from("profiles").select("id, display_name").eq("group_id", activeProfile.group_id).is("removed_at", null),
+    supabase
+      .from("default_splits")
+      .select("id, group_id, user_id, percentage")
+      .eq("group_id", activeProfile.group_id)
+      .returns<DefaultSplitRow[]>(),
+  ]);
 
   return (
     <TransactionForm
       groupId={activeProfile.group_id}
       group={group}
-      members={members ?? []}
+      members={membersResult.data ?? []}
       userId={user.id}
+      profileId={activeProfile.id}
+      defaultSplits={defaultSplitsResult.data ?? []}
     />
   );
 }

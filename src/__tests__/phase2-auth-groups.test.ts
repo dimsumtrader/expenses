@@ -2,11 +2,10 @@ import { describe, test, expect } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://mjvfcenhepujxzmmuhyj.supabase.co";
-const ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qdmZjZW5oZXB1anh6bW11aHlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMzc2NjYsImV4cCI6MjA5MzkxMzY2Nn0.8b3bJjbAxvEU3cj5_YbdyBX6UyHAZQo-OQArVD_EFl8";
+const PUBLISHABLE_KEY = "sb_publishable_BTfhvqaa1iTRcZrsSGunRQ_kFmpYlEy";
 
 function anonClient() {
-  return createClient(SUPABASE_URL, ANON_KEY);
+  return createClient(SUPABASE_URL, PUBLISHABLE_KEY);
 }
 
 describe("Phase 2: Auth & Groups", () => {
@@ -46,7 +45,7 @@ describe("Phase 2: Auth & Groups", () => {
       const supabase = anonClient();
       const { error } = await supabase
         .from("groups")
-        .insert({ room_id: "000000", home_currency: "USD" });
+        .insert({ room_id: "0000", home_currency: "USD" });
 
       expect(error).toBeTruthy();
       expect(error!.code).toBe("42501"); // insufficient privilege
@@ -74,15 +73,15 @@ describe("Phase 2: Auth & Groups", () => {
   });
 
   // -------------------------------------------------------
-  // 2. Room Lookup Logic
+  // 2. Group Lookup Logic
   // -------------------------------------------------------
-  describe("Room Join Logic", () => {
+  describe("Group Join Logic", () => {
     test("lookup non-existent room_id returns error", async () => {
       const supabase = anonClient();
       const { data, error } = await supabase
         .from("groups")
         .select("id")
-        .eq("room_id", "999999")
+        .eq("room_id", "9999")
         .single();
 
       expect(data).toBeNull();

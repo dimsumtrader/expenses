@@ -2,7 +2,8 @@
 
 import { deleteEntry } from "@/app/actions/entries";
 import { haptic } from "@/lib/haptics";
-import type { EntryRow, GroupRow } from "@/lib/types";
+import Decimal from "decimal.js";
+import type { EntryRow, GroupRow, SplitRow } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { X, Pencil, Trash2 } from "lucide-react";
@@ -12,12 +13,14 @@ type Member = { id: string; display_name: string };
 
 export default function EntryDetail({
   entry,
+  splits,
   profiles,
   group,
   profileId,
   onClose,
 }: {
   entry: EntryRow;
+  splits: SplitRow[];
   profiles: Member[];
   group: GroupRow;
   profileId: string;
@@ -71,6 +74,26 @@ export default function EntryDetail({
             <div className="flex justify-between">
               <span className="text-gray-500">Paid by</span>
               <span>{payer?.display_name ?? "?"}</span>
+            </div>
+          )}
+          {entry.type === "transaction" && splits.length > 0 && (
+            <div className="pt-2 mt-2 border-t border-gray-200">
+              <span className="text-gray-500 text-xs">Split</span>
+              <div className="mt-1 space-y-1">
+                {splits.map((s) => {
+                  const member = profiles.find((p) => p.id === s.user_id);
+                  const share = new Decimal(entry.amount_home)
+                    .times(s.percentage)
+                    .div(100)
+                    .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+                  return (
+                    <div key={s.id} className="flex justify-between text-xs">
+                      <span>{member?.display_name ?? "?"}</span>
+                      <span>{s.percentage}% ({share.toFixed(2)} {group.home_currency})</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
           {entry.type === "payment" && (
