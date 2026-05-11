@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserId } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { computeBalances } from "@/lib/balances";
 import DashboardClient from "./dashboard-client";
@@ -6,16 +6,13 @@ import type { GroupRow, ProfileRow, EntryRow, SplitRow } from "@/lib/types";
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ g?: string }> }) {
   const params = await searchParams;
+  const userId = await getUserId();
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const { data: profiles } = await supabase
     .from("profiles")
     .select("id, user_id, group_id, display_name, groups(id, room_id, name, home_currency)")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .is("removed_at", null)
     .returns<ProfileRow[]>();
 
@@ -30,7 +27,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
         entries={[]}
         splits={[]}
         profiles={[]}
-        userId={user.id}
+        userId={userId}
         profileId=""
       />
     );
@@ -107,7 +104,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ g
       entries={entries}
       splits={splits}
       profiles={members}
-      userId={user.id}
+      userId={userId}
       profileId={activeProfile.id}
     />
   );

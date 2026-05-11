@@ -105,6 +105,7 @@ export default function DashboardClient({
                 {/* Section 2: Edit */}
                 <Link
                   href="/settings"
+                  prefetch
                   className="block px-3 py-2.5 font-mono text-xs border-b-2 border-black hover:bg-gray-50 text-accent"
                 >
                   EDIT
@@ -129,6 +130,7 @@ export default function DashboardClient({
             </button>
             <Link
               href="/setup"
+              prefetch
               className="font-mono text-[11px] border-2 border-black px-2 py-1 hover:bg-black hover:text-white transition-colors"
             >
               + GROUP
@@ -242,6 +244,7 @@ export default function DashboardClient({
       {/* Transaction FAB */}
       <Link
         href={`/add/transaction${activeGroupParam}`}
+        prefetch
         className="fixed bottom-6 right-6 z-20 bg-accent border-2 border-black w-14 h-14 flex items-center justify-center active:scale-90 transition-transform"
         onClick={() => haptic()}
       >
@@ -251,6 +254,7 @@ export default function DashboardClient({
       {/* Payment FAB */}
       <Link
         href={`/add/payment${activeGroupParam}`}
+        prefetch
         className="fixed bottom-6 left-6 z-20 bg-white border-2 border-black w-14 h-14 flex items-center justify-center active:scale-90 transition-transform"
         onClick={() => haptic()}
       >
@@ -284,6 +288,7 @@ function NoGroupDashboard() {
       <div className="flex-1 flex items-center justify-center px-4">
         <Link
           href="/setup"
+          prefetch
           className="bg-accent text-white font-mono font-bold py-3 px-8 border-2 border-black active:scale-[0.98] transition-transform"
         >
           ADD GROUP

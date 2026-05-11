@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserId } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import Decimal from "decimal.js";
@@ -14,12 +14,10 @@ function generateRoomId(): string {
 }
 
 export async function createGroup(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
+  const [userId, supabase] = await Promise.all([
+    getUserId(),
+    createClient(),
+  ]);
 
   const displayName = formData.get("displayName") as string;
   const homeCurrency = formData.get("homeCurrency") as string;
@@ -50,7 +48,7 @@ export async function createGroup(formData: FormData) {
   if (!group) throw new Error("Failed to create group");
 
   await supabase.from("profiles").insert({
-    user_id: user.id,
+    user_id: userId,
     group_id: group.id,
     display_name: displayName,
   });
@@ -60,12 +58,10 @@ export async function createGroup(formData: FormData) {
 }
 
 export async function joinGroup(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
+  const [userId, supabase] = await Promise.all([
+    getUserId(),
+    createClient(),
+  ]);
 
   const displayName = formData.get("displayName") as string;
   const roomId = (formData.get("roomId") as string).trim();
@@ -82,7 +78,7 @@ export async function joinGroup(formData: FormData) {
   const { data: existing } = await supabase
     .from("profiles")
     .select("id")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("group_id", group.id)
     .maybeSingle();
 
@@ -93,7 +89,7 @@ export async function joinGroup(formData: FormData) {
       .eq("id", existing.id);
   } else {
     await supabase.from("profiles").insert({
-      user_id: user.id,
+      user_id: userId,
       group_id: group.id,
       display_name: displayName,
     });
@@ -105,10 +101,6 @@ export async function joinGroup(formData: FormData) {
 
 export async function updateGroup(formData: FormData) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const groupId = formData.get("groupId") as string;
   const name = formData.get("name") as string;
@@ -127,10 +119,6 @@ export async function updateGroup(formData: FormData) {
 
 export async function saveDefaultSplits(groupId: string, splits: { userId: string; percentage: string }[]) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const total = splits.reduce((sum, s) => sum.plus(new Decimal(s.percentage || "0")), new Decimal(0));
   if (!total.equals(100)) throw new Error("Default splits must total 100%");
@@ -157,10 +145,6 @@ export async function saveGroupSettings(
   splits: { userId: string; percentage: string }[],
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const { error: groupError } = await supabase
     .from("groups")
@@ -187,23 +171,22 @@ export async function saveGroupSettings(
 }
 
 export async function leaveGroup(groupId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const [userId, supabase] = await Promise.all([
+    getUserId(),
+    createClient(),
+  ]);
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("id")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("group_id", groupId)
     .single();
 
   const { error } = await supabase
     .from("profiles")
     .update({ removed_at: new Date().toISOString() })
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("group_id", groupId);
 
   if (error) throw new Error(error.message);

@@ -2,6 +2,8 @@
 
 import { joinGroup } from "@/app/actions/groups";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function JoinForm({
   group,
@@ -25,7 +27,10 @@ export default function JoinForm({
         action={handleSubmit}
         className="w-full max-w-sm border-2 border-black rounded-none p-6"
       >
-        <h1 className="font-mono text-xl font-bold mb-2 text-center">JOIN GROUP</h1>
+        <h1 className="font-mono text-xl font-bold mb-2 text-center">
+          <Link href="/" className="inline-block mr-4 p-1 hover:bg-black hover:text-white transition-colors border-2 border-black align-middle"><ArrowLeft size={16} /></Link>
+          JOIN GROUP
+        </h1>
         <div className="text-center mb-6">
           <p className="font-mono text-sm font-bold">{group.name}</p>
           <p className="font-mono text-xs text-gray-500">

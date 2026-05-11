@@ -2,6 +2,8 @@
 
 import { createGroup, joinGroup } from "@/app/actions/groups";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 const CURRENCIES = ["HKD", "CNY", "USD", "EUR", "JPY", "CAD"];
 
@@ -30,6 +32,7 @@ export default function SetupForm() {
           className="w-full border-2 border-black rounded-none p-6"
         >
           <h1 className="font-mono text-xl font-bold mb-6 text-center">
+            <Link href="/" className="inline-block mr-4 p-1 hover:bg-black hover:text-white transition-colors border-2 border-black align-middle"><ArrowLeft size={16} /></Link>
             {mode === "create" ? "CREATE GROUP" : "JOIN GROUP"}
           </h1>
 

@@ -1,5 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+
+export async function getUserId(): Promise<string> {
+  const headersList = await headers();
+  const userId = headersList.get("x-user-id");
+  if (!userId) throw new Error("Not authenticated");
+  return userId;
+}
 
 export async function createClient() {
   const cookieStore = await cookies();

@@ -205,10 +205,10 @@ describe("Transaction Submission Logic (unit)", () => {
   });
 
   test("stores both home and original when foreign currency", () => {
-    const amountHome = "108.00"; // converted by client
-    const amountOrig = "100.00";
-    const currencyOrig = "CNY";
-    const homeCurrency = "HKD";
+    const amountHome: string = "108.00"; // converted by client
+    const amountOrig: string = "100.00";
+    const currencyOrig: string = "CNY";
+    const homeCurrency: string = "HKD";
 
     const finalAmountHome = new Decimal(amountHome);
     let finalAmountOrig: Decimal | null = null;

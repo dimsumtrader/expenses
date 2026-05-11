@@ -1,16 +1,12 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserId } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import Decimal from "decimal.js";
 
 export async function updateTransaction(formData: FormData) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const entryId = formData.get("entryId") as string;
   const title = formData.get("title") as string;
@@ -64,10 +60,6 @@ export async function updateTransaction(formData: FormData) {
 
 export async function updatePayment(formData: FormData) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const entryId = formData.get("entryId") as string;
   const payerId = formData.get("payerId") as string;

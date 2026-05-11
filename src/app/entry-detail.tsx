@@ -109,6 +109,7 @@ export default function EntryDetail({
             <>
               <Link
                 href={`/edit/${entry.id}`}
+                prefetch
                 onClick={() => haptic()}
                 className="flex-1 flex items-center justify-center gap-2 border-2 border-black rounded-none py-2 font-mono text-sm font-bold"
               >

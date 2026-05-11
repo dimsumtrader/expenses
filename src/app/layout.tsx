@@ -1,17 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono } from "next/font/google";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "../../node_modules/geist/dist/fonts/geist-mono/GeistMono-Regular.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
 });
 
-const inter = Inter({
+const inter = localFont({
+  src: "../../node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {

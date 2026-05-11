@@ -1,15 +1,11 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserId } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import Decimal from "decimal.js";
 
 export async function submitTransaction(formData: FormData) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const groupId = formData.get("groupId") as string;
   const title = formData.get("title") as string;
@@ -85,10 +81,6 @@ export async function submitTransaction(formData: FormData) {
 
 export async function submitPayment(formData: FormData) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const groupId = formData.get("groupId") as string;
   const payerId = formData.get("payerId") as string;
@@ -118,10 +110,6 @@ export async function submitPayment(formData: FormData) {
 
 export async function deleteEntry(entryId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const { error } = await supabase.from("entries").delete().eq("id", entryId);
   if (error) throw new Error(error.message);

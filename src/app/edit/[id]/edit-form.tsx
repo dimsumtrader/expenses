@@ -5,6 +5,8 @@ import { haptic } from "@/lib/haptics";
 import type { EntryRow, SplitRow, GroupRow } from "@/lib/types";
 import Decimal from "decimal.js";
 import { useState, useActionState } from "react";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 type Member = { id: string; display_name: string };
 
@@ -74,6 +76,7 @@ export default function EditForm({
         className="w-full max-w-sm border-2 border-black rounded-none p-6"
       >
         <h1 className="font-mono text-xl font-bold mb-6 text-center">
+          <Link href="/" className="inline-block mr-4 p-1 hover:bg-black hover:text-white transition-colors border-2 border-black align-middle"><ArrowLeft size={16} /></Link>
           EDIT {isTransaction ? "TRANSACTION" : "PAYMENT"}
         </h1>
 

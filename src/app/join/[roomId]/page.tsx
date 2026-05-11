@@ -1,12 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserId } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import JoinForm from "./join-form";
 
 export default async function JoinPage({ params }: { params: Promise<{ roomId: string }> }) {
   const { roomId } = await params;
-  const supabase = await createClient();
+  const [userId, supabase] = await Promise.all([
+    getUserId(),
+    createClient(),
+  ]);
 
-  // Look up group by room_id
   const { data: group } = await supabase
     .from("groups")
     .select("id, room_id, name, home_currency")
@@ -24,20 +26,11 @@ export default async function JoinPage({ params }: { params: Promise<{ roomId: s
     );
   }
 
-  // Check if user is already authenticated
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect(`/login?next=/join/${roomId}`);
-  }
-
   // Check if user is already in this group
   const { data: existingProfile } = await supabase
     .from("profiles")
     .select("id")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("group_id", group.id)
     .single();
 

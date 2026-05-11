@@ -44,5 +44,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Propagate user ID to downstream handlers
+  if (user) {
+    request.headers.set("x-user-id", user.id);
+    return NextResponse.next({ request });
+  }
+
   return supabaseResponse;
 }
