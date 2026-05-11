@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     statusBarStyle: "black",
     title: "Easy Split",
   },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
