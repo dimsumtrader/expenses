@@ -88,7 +88,7 @@ export default function DashboardClient({
             </button>
 
             {groupMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-white border-2 border-black w-52 z-20">
+              <div className="absolute left-0 top-full mt-1 bg-white border-2 border-black w-44 z-20">
                 {/* Section 1: Groups */}
                 {allGroups.map((g, i) => (
                   <button

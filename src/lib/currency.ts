@@ -12,7 +12,7 @@ export async function convertCurrency(
   if (from === to) return amount;
 
   const res = await fetch(
-    `https://api.frankfurter.app/latest?amount=1&from=${from}&to=${to}`,
+    `https://api.frankfurter.dev/v1/latest?amount=1&from=${from}&to=${to}`,
   );
   if (!res.ok) throw new Error("Currency conversion failed");
 

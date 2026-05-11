@@ -50,9 +50,10 @@ describe("Phase 5: PWA & Polish", () => {
       expect(m.theme_color).toBe("#FF4F00");
       expect(m.background_color).toBe("#FFFFFF");
       expect(m.start_url).toBe("/");
-      expect(m.icons).toHaveLength(2);
+      expect(m.icons).toHaveLength(3);
       expect(m.icons![0].sizes).toBe("192x192");
       expect(m.icons![1].sizes).toBe("512x512");
+      expect(m.icons![2].purpose).toBe("maskable");
     });
   });
 

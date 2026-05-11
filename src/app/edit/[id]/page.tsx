@@ -15,6 +15,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
     .from("profiles")
     .select("id, user_id, group_id, display_name, groups(id, room_id, name, home_currency)")
     .eq("user_id", user.id)
+    .is("removed_at", null)
     .returns<ProfileRow[]>();
 
   if (!profiles || profiles.length === 0) redirect("/setup");
@@ -37,7 +38,8 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
   const { data: members } = await supabase
     .from("profiles")
     .select("id, display_name")
-    .eq("group_id", activeGroup.group_id);
+    .eq("group_id", activeGroup.group_id)
+    .is("removed_at", null);
 
   const { data: splits } = await supabase
     .from("splits")
